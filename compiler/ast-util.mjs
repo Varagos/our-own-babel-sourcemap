@@ -1,4 +1,4 @@
-import sourceMap from "source-map";
+import sourceMap from 'source-map';
 
 const SourceMapGenerator = sourceMap.SourceMapGenerator;
 
@@ -12,11 +12,8 @@ const SourceMapGenerator = sourceMap.SourceMapGenerator;
 export function visit(ast, callback) {
   callback(ast);
 
-  const keys = Object.keys(ast);
-  for (let i = 0; i < keys.length; i++) {
-    const keyName = keys[i];
-    const child = ast[keyName];
-    if (keyName === "loc") return;
+  for (const [keyName, child] of Object.entries(ast)) {
+    if (keyName === 'loc') return;
     if (Array.isArray(child)) {
       for (let j = 0; j < child.length; j++) {
         visit(child[j], callback);
@@ -27,7 +24,7 @@ export function visit(ast, callback) {
   }
 }
 function isNode(node) {
-  return typeof node === "object" && node.type;
+  return typeof node === 'object' && node.type;
 }
 
 /*
@@ -35,8 +32,8 @@ function isNode(node) {
  * Pass-by-ref so write to reference
  * clone does not have original on
  */
-export const cloneOriginalOnAst = ast => {
-  visit(ast, node => {
+export const cloneOriginalOnAst = (ast) => {
+  visit(ast, (node) => {
     const clone = Object.assign({}, node);
     node.original = clone;
   });
@@ -46,15 +43,15 @@ export const cloneOriginalOnAst = ast => {
  * Help with Node properties is https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
  * DONT flatten on cloned, as want to update that AST, not flattened.
  */
-export const flattenTokens = ast => {
+export const flattenTokens = (ast) => {
   const flattenedTokens = [];
-  ast.body.map(current => {
+  ast.body.map((current) => {
     // process each body to help us separate by block/line
     const row = [];
-    visit(current, node => {
+    visit(current, (node) => {
       if (node.type) {
         const item = {
-          type: node.type
+          type: node.type,
           // ALWAYS: location, original
           // SOMETIMES: operator, name, value
         };
@@ -100,19 +97,19 @@ const mappings = [
   {
     target: {
       start: { line: 1, column: 0 },
-      end: { line: 1, column: 0 }
+      end: { line: 1, column: 0 },
     },
     source: {
       start: { line: 1, column: 0 },
-      end: { line: 1, column: 0 }
+      end: { line: 1, column: 0 },
     },
-    name: "START"
-  }
+    name: 'START',
+  },
 ];
-const sourceFile = "index.es6.js";
+const sourceFile = 'index.es6.js';
 
 const mozillaMap = new SourceMapGenerator({
-  file: "index.es5.js"
+  file: 'index.es5.js',
 });
 
 /*
@@ -125,13 +122,7 @@ const mozillaMap = new SourceMapGenerator({
  *  reset column to 0
  *  increment current line
  */
-const buildLocation = ({
-  colOffset = 0,
-  lineOffset = 0,
-  name,
-  source,
-  node
-}) => {
+const buildLocation = ({ colOffset = 0, lineOffset = 0, name, source, node }) => {
   let endColumn;
   let startColumn;
   let startLine;
@@ -150,12 +141,12 @@ const buildLocation = ({
   const target = {
     start: {
       line: startLine,
-      column: startColumn
+      column: startColumn,
     },
     end: {
       line: endLine,
-      column: endColumn
-    }
+      column: endColumn,
+    },
   };
   node.loc = target; // Update node with new location
 
@@ -167,11 +158,11 @@ const buildLocation = ({
     mozillaMap.addMapping({
       generated: {
         line: target.start.line,
-        column: target.start.column
+        column: target.start.column,
       },
       source: sourceFile,
       original: source.start,
-      name
+      name,
     });
   }
 
@@ -182,29 +173,29 @@ const buildLocation = ({
  * Build mappings
  */
 // Utils..copied from "eccodegen"
-const space = " ";
+const space = ' ';
 const indent = space + space;
-const newline = "\n";
-const semicolon = ";"; // USUALLY flags on this
+const newline = '\n';
+const semicolon = ';'; // USUALLY flags on this
 
 // Node statements
 const Statements = {
-  FunctionDeclaration: function(node) {
+  FunctionDeclaration: function (node) {
     mappings.push(
       buildLocation({
-        name: "function",
-        colOffset: "function".length,
+        name: 'function',
+        colOffset: 'function'.length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
     mappings.push(
       buildLocation({
-        name: "_function_ space",
+        name: '_function_ space',
         colOffset: space.length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
@@ -212,24 +203,24 @@ const Statements = {
     if (node.id) {
       id = generateIdentifier(node.id);
     } else {
-      id = "";
+      id = '';
     }
     const body = generateFunctionBody(node);
 
     // console.log("mappings", mappings[mappings.length - 1].target);
 
     // block has start + end?
-    return ["function", space, id].concat(body); // JOIN
+    return ['function', space, id].concat(body); // JOIN
   },
-  BlockStatement: function(node) {
-    let result = ["{", newline];
+  BlockStatement: function (node) {
+    let result = ['{', newline];
 
     mappings.push(
       buildLocation({
-        name: "_function_ {",
-        colOffset: "{".length,
+        name: '_function_ {',
+        colOffset: '{'.length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
@@ -244,71 +235,64 @@ const Statements = {
       start: node.original.loc.end,
       end: {
         line: 3,
-        column: 2
-      }
+        column: 2,
+      },
     };
     mappings.push(
       buildLocation({
-        name: "_function_ }",
+        name: '_function_ }',
         lineOffset: 1,
         // source: node.original.loc,
         source: endBracketLocation,
-        node
+        node,
       })
     );
 
-    result.push("}");
-    result.push("\n");
+    result.push('}');
+    result.push('\n');
     return result;
   },
-  ReturnStatement: function(node) {
+  ReturnStatement: function (node) {
     // USUALLY check for argument else return
     mappings.push(
       buildLocation({
-        name: "indent _return_",
+        name: 'indent _return_',
         colOffset: indent.length,
         lineOffset: 1,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
     mappings.push(
       buildLocation({
-        name: "return",
-        colOffset: "return".length,
+        name: 'return',
+        colOffset: 'return'.length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
     mappings.push(
       buildLocation({
-        name: "_return_ space",
+        name: '_return_ space',
         colOffset: space.length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
-    return [
-      indent,
-      "return",
-      space,
-      generateExpression(node.argument),
-      semicolon,
-      newline
-    ];
+    return [indent, 'return', space, generateExpression(node.argument), semicolon, newline];
   },
-  BinaryExpression: function(node) {
+  BinaryExpression: function (node) {
     const left = generateExpression(node.left);
 
     mappings.push(
       buildLocation({
-        name: "_binary expression pre_ space",
-        colOffset: " ".length,
+        name: '_binary expression pre_ space',
+        colOffset: ' '.length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
@@ -317,16 +301,16 @@ const Statements = {
         name: `_binary expression_ operator ${node.operator}`,
         colOffset: String(node.operator).length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
     mappings.push(
       buildLocation({
-        name: "_binary expression post_ space",
-        colOffset: " ".length,
+        name: '_binary expression post_ space',
+        colOffset: ' '.length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
@@ -334,75 +318,71 @@ const Statements = {
 
     return [left, space, node.operator, space, right];
   },
-  Literal: function(node) {
+  Literal: function (node) {
     mappings.push(
       buildLocation({
         name: `_literal_ value ${node.value}`,
         colOffset: String(node.value).length,
         source: node.original.loc,
-        node
+        node,
       })
     );
 
     if (node.value === null) {
-      return "null";
+      return 'null';
     }
-    if (typeof node.value === "boolean") {
-      return node.value ? "true" : "false";
+    if (typeof node.value === 'boolean') {
+      return node.value ? 'true' : 'false';
     }
     return node.value;
   },
-  Identifier: function(node) {
+  Identifier: function (node) {
     return generateIdentifier(node);
   },
-  ExpressionStatement: function(node) {
+  ExpressionStatement: function (node) {
     const result = generateExpression(node.expression); // was []
-    result.push(";");
+    result.push(';');
     return result;
   },
-  AssignmentExpression: function(node, precedence) {
+  AssignmentExpression: function (node, precedence) {
     return generateAssignment(node.left, node.right, node.operator, precedence);
   },
-  MemberExpression: function(node, precedence) {
+  MemberExpression: function (node, precedence) {
     const result = [generateExpression(node.object)];
-    result.push(".");
+    result.push('.');
     result.push(generateIdentifier(node.property));
     return parenthesize(result, 19, precedence);
-  }
+  },
 };
 // Node processors
 function parenthesize(text, current, should) {
   if (current < should) {
-    return ["(", text, ")"];
+    return ['(', text, ')'];
   }
   return text;
 }
 const generateAssignment = (left, right, operator, precedence) => {
-  const expression = [
-    generateExpression(left),
-    space + operator + space,
-    generateExpression(right)
-  ];
+  const expression = [generateExpression(left), space + operator + space, generateExpression(right)];
   return parenthesize(expression, 1, precedence).flat(); // FLATTEN
 };
-const generateIdentifier = id => {
+const generateIdentifier = (id) => {
   mappings.push(
     buildLocation({
       name: `_identifier_ name ${id.name}`,
       colOffset: String(id.name).length,
       source: id.original.loc,
-      node: id
+      node: id,
     })
   );
   return id.name;
 };
-const generateFunctionParams = node => {
+const generateFunctionParams = (node) => {
   mappings.push(
     buildLocation({
       name: `_function_ (`,
-      colOffset: "(".length,
+      colOffset: '('.length,
       source: node.original.loc,
-      node
+      node,
     })
   );
   mappings.push(
@@ -410,40 +390,42 @@ const generateFunctionParams = node => {
       name: `_function_ param name ${node.params[0].name}`,
       colOffset: node.params[0].name.length,
       source: node.original.loc,
-      node
+      node,
     })
   );
   mappings.push(
     buildLocation({
       name: `_function_ )`,
-      colOffset: ")".length,
+      colOffset: ')'.length,
       source: node.original.loc,
-      node
+      node,
     })
   );
   const result = [];
-  result.push("(");
+  result.push('(');
   result.push(node.params[0].name); // USUALLY lots of logic to grab param name
-  result.push(")");
+  result.push(')');
   return result;
 };
-const generateStatement = node => {
+const generateStatement = (node) => {
   const result = Statements[node.type](node);
   return result;
 };
-const generateFunctionBody = node => {
+const generateFunctionBody = (node) => {
   const result = generateFunctionParams(node);
   return result.concat(generateStatement(node.body)); // if block generateStatement
 };
-const generateExpression = node => {
+const generateExpression = (node) => {
   const result = Statements[node.type](node);
 
   return result;
 };
-export const getMapping = ast => {
-  const code = ast.body
-    .map(astBody => Statements[astBody.type](astBody))
-    .flat();
+
+/**
+ * iterate over the program body (i.e. each line of code) and start running our generator.
+ */
+export const getMapping = (ast) => {
+  const code = ast.body.map((astBody) => Statements[astBody.type](astBody)).flat();
 
   return { mappings, code, mozillaMap };
 };
