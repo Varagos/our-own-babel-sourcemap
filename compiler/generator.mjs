@@ -1,5 +1,4 @@
 import { buildLocation } from './buildLocation.mjs';
-import { mappings } from './sourceMap.mjs';
 
 /*
  * Build mappings
@@ -10,26 +9,22 @@ const indent = space + space;
 const newline = '\n';
 const semicolon = ';'; // USUALLY flags on this
 
-// Node statements
+// This generates the code but also adds the mappings
 export const Statements = {
   FunctionDeclaration: function (node) {
-    mappings.push(
-      buildLocation({
-        name: 'function',
-        colOffset: 'function'.length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: 'function',
+      colOffset: 'function'.length,
+      source: node.original.loc,
+      node,
+    });
 
-    mappings.push(
-      buildLocation({
-        name: '_function_ space',
-        colOffset: space.length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: '_function_ space',
+      colOffset: space.length,
+      source: node.original.loc,
+      node,
+    });
 
     let id;
     if (node.id) {
@@ -47,14 +42,12 @@ export const Statements = {
   BlockStatement: function (node) {
     let result = ['{', newline];
 
-    mappings.push(
-      buildLocation({
-        name: '_function_ {',
-        colOffset: '{'.length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: '_function_ {',
+      colOffset: '{'.length,
+      source: node.original.loc,
+      node,
+    });
 
     // USUALLY withIndent
     // USUALLY for loop on body
@@ -70,15 +63,13 @@ export const Statements = {
         column: 2,
       },
     };
-    mappings.push(
-      buildLocation({
-        name: '_function_ }',
-        lineOffset: 1,
-        // source: node.original.loc,
-        source: endBracketLocation,
-        node,
-      })
-    );
+    buildLocation({
+      name: '_function_ }',
+      lineOffset: 1,
+      // source: node.original.loc,
+      source: endBracketLocation,
+      node,
+    });
 
     result.push('}');
     result.push('\n');
@@ -86,79 +77,65 @@ export const Statements = {
   },
   ReturnStatement: function (node) {
     // USUALLY check for argument else return
-    mappings.push(
-      buildLocation({
-        name: 'indent _return_',
-        colOffset: indent.length,
-        lineOffset: 1,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: 'indent _return_',
+      colOffset: indent.length,
+      lineOffset: 1,
+      source: node.original.loc,
+      node,
+    });
 
-    mappings.push(
-      buildLocation({
-        name: 'return',
-        colOffset: 'return'.length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: 'return',
+      colOffset: 'return'.length,
+      source: node.original.loc,
+      node,
+    });
 
-    mappings.push(
-      buildLocation({
-        name: '_return_ space',
-        colOffset: space.length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: '_return_ space',
+      colOffset: space.length,
+      source: node.original.loc,
+      node,
+    });
 
     return [indent, 'return', space, generateExpression(node.argument), semicolon, newline];
   },
   BinaryExpression: function (node) {
     const left = generateExpression(node.left);
 
-    mappings.push(
-      buildLocation({
-        name: '_binary expression pre_ space',
-        colOffset: ' '.length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: '_binary expression pre_ space',
+      colOffset: ' '.length,
+      source: node.original.loc,
+      node,
+    });
 
-    mappings.push(
-      buildLocation({
-        name: `_binary expression_ operator ${node.operator}`,
-        colOffset: String(node.operator).length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: `_binary expression_ operator ${node.operator}`,
+      colOffset: String(node.operator).length,
+      source: node.original.loc,
+      node,
+    });
 
-    mappings.push(
-      buildLocation({
-        name: '_binary expression post_ space',
-        colOffset: ' '.length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: '_binary expression post_ space',
+      colOffset: ' '.length,
+      source: node.original.loc,
+      node,
+    });
 
     const right = generateExpression(node.right);
 
     return [left, space, node.operator, space, right];
   },
   Literal: function (node) {
-    mappings.push(
-      buildLocation({
-        name: `_literal_ value ${node.value}`,
-        colOffset: String(node.value).length,
-        source: node.original.loc,
-        node,
-      })
-    );
+    buildLocation({
+      name: `_literal_ value ${node.value}`,
+      colOffset: String(node.value).length,
+      source: node.original.loc,
+      node,
+    });
 
     if (node.value === null) {
       return 'null';
@@ -198,41 +175,35 @@ const generateAssignment = (left, right, operator, precedence) => {
   return parenthesize(expression, 1, precedence).flat(); // FLATTEN
 };
 const generateIdentifier = (id) => {
-  mappings.push(
-    buildLocation({
-      name: `_identifier_ name ${id.name}`,
-      colOffset: String(id.name).length,
-      source: id.original.loc,
-      node: id,
-    })
-  );
+  buildLocation({
+    name: `_identifier_ name ${id.name}`,
+    colOffset: String(id.name).length,
+    source: id.original.loc,
+    node: id,
+  });
   return id.name;
 };
 const generateFunctionParams = (node) => {
-  mappings.push(
-    buildLocation({
-      name: `_function_ (`,
-      colOffset: '('.length,
-      source: node.original.loc,
-      node,
-    })
-  );
-  mappings.push(
-    buildLocation({
-      name: `_function_ param name ${node.params[0].name}`,
-      colOffset: node.params[0].name.length,
-      source: node.original.loc,
-      node,
-    })
-  );
-  mappings.push(
-    buildLocation({
-      name: `_function_ )`,
-      colOffset: ')'.length,
-      source: node.original.loc,
-      node,
-    })
-  );
+  buildLocation({
+    name: `_function_ (`,
+    colOffset: '('.length,
+    source: node.original.loc,
+    node,
+  });
+  buildLocation({
+    name: `_function_ param name ${node.params[0].name}`,
+    colOffset: node.params[0].name.length,
+    source: node.original.loc,
+    node,
+  });
+
+  buildLocation({
+    name: `_function_ )`,
+    colOffset: ')'.length,
+    source: node.original.loc,
+    node,
+  });
+
   const result = [];
   result.push('(');
   result.push(node.params[0].name); // USUALLY lots of logic to grab param name

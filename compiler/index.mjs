@@ -6,8 +6,8 @@ import { visit, cloneOriginalOnAst, getMapping } from './ast-util.mjs';
 
 const file = './src/index.es6.js';
 const fullPath = path.resolve(file);
-const fileContents = fs.readFileSync(fullPath, 'utf8');
-const sourceAst = ast.parse(fileContents, { loc: true });
+const sourceFileContent = fs.readFileSync(fullPath, 'utf8');
+const sourceAst = ast.parse(sourceFileContent, { loc: true });
 
 // 1. add shallow clone of each node onto AST
 cloneOriginalOnAst(sourceAst);
@@ -23,18 +23,20 @@ sourceAst.body[0].body.body[0].argument.right = leftClone;
 // Now: "1 + number". Note: loc is wrong
 
 // 3. Mapping
-const { mappings, code, mozillaMap } = getMapping(sourceAst);
-mozillaMap.setSourceContent(fileContents);
+const { code, mozillaMap } = getMapping(sourceAst);
+mozillaMap.setSourceContent(sourceFileContent);
 
+const sourceMapContent = mozillaMap.toString();
 if (!fs.existsSync('./build')) {
   fs.mkdirSync('./build');
 }
-// Map from mozillas
-fs.writeFileSync(`./build/index.es5.js.map`, mozillaMap.toString(), 'utf8');
+
+fs.writeFileSync(`./build/index.es5.js.map`, sourceMapContent, 'utf8');
 
 // Add sourcemap location
 code.push('\n');
 code.push('//# sourceMappingURL=/static/index.es5.js.map');
+const generatedFileContent = code.join('');
 
-fs.writeFileSync(`./build/index.es5.js`, code.join(''), 'utf8');
-fs.writeFileSync(`./build/index.es6.js`, fileContents, 'utf8');
+fs.writeFileSync(`./build/index.es5.js`, generatedFileContent, 'utf8');
+fs.writeFileSync(`./build/index.es6.js`, sourceFileContent, 'utf8');

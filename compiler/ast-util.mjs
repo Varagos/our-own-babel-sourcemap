@@ -1,4 +1,4 @@
-import { mozillaMap, mappings } from './sourceMap.mjs';
+import { mozillaMap } from './sourceMap.mjs';
 import { Statements } from './generator.mjs';
 
 /*
@@ -42,58 +42,63 @@ export const cloneOriginalOnAst = (ast) => {
  * Help with Node properties is https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
  * DONT flatten on cloned, as want to update that AST, not flattened.
  */
-export const flattenTokens = (ast) => {
-  const flattenedTokens = [];
-  ast.body.map((current) => {
-    // process each body to help us separate by block/line
-    const row = [];
-    visit(current, (node) => {
-      if (node.type) {
-        const item = {
-          type: node.type,
-          // ALWAYS: location, original
-          // SOMETIMES: operator, name, value
-        };
-        if (node.value) {
-          item.value = node.value;
-        }
-        if (node.name) {
-          item.name = node.name;
-        }
-        if (node.operator) {
-          item.operator = node.operator;
-        }
-        if (node.loc) {
-          item.location = node.loc;
-        }
-        // item.original = Object.assign({}, item);
+// export const flattenTokens = (ast) => {
+//   const flattenedTokens = [];
+//   ast.body.map((current) => {
+//     // process each body to help us separate by block/line
+//     const row = [];
+//     visit(current, (node) => {
+//       if (node.type) {
+//         const item = {
+//           type: node.type,
+//           // ALWAYS: location, original
+//           // SOMETIMES: operator, name, value
+//         };
+//         if (node.value) {
+//           item.value = node.value;
+//         }
+//         if (node.name) {
+//           item.name = node.name;
+//         }
+//         if (node.operator) {
+//           item.operator = node.operator;
+//         }
+//         if (node.loc) {
+//           item.location = node.loc;
+//         }
+//         // item.original = Object.assign({}, item);
 
-        // Not needed. Its the identifier
-        // if (node.params) {
-        //   item.params = node.params;
-        // }
-        // Not needed. Its the left identifier + right literal
-        // if (node.argument) {
-        //   item.argument = node.argument;
-        // }
+//         // Not needed. Its the identifier
+//         // if (node.params) {
+//         //   item.params = node.params;
+//         // }
+//         // Not needed. Its the left identifier + right literal
+//         // if (node.argument) {
+//         //   item.argument = node.argument;
+//         // }
 
-        // if (node.type === "FunctionDeclaration") {
-        //   console.log("FunctionDeclaration", node);
-        // }
-        row.push(item);
-      }
-    });
+//         // if (node.type === "FunctionDeclaration") {
+//         //   console.log("FunctionDeclaration", node);
+//         // }
+//         row.push(item);
+//       }
+//     });
 
-    flattenedTokens.push(row);
-  });
-  return flattenedTokens;
-};
+//     flattenedTokens.push(row);
+//   });
+//   return flattenedTokens;
+// };
 
 /**
  * iterate over the program body (i.e. each line of code) and start running our generator.
  */
 export const getMapping = (ast) => {
-  const code = ast.body.map((astBody) => Statements[astBody.type](astBody)).flat();
+  const code = ast.body
+    .map((astBody) => {
+      const statementFunc = Statements[astBody.type];
+      return statementFunc(astBody);
+    })
+    .flat();
 
-  return { mappings, code, mozillaMap };
+  return { code, mozillaMap };
 };
