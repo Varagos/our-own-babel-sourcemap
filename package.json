@@ -7,6 +7,7 @@
     "start": "npm run compile && npm run server",
     "server": "node server.mjs",
     "compile": "node compiler/index.mjs",
+    "compile:bl": "node compiler/bl/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
