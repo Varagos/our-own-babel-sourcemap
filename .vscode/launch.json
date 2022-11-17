@@ -11,6 +11,13 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run-script", "compile"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch ts-node",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["${workspaceFolder}/src/ts-node/script.ts"]
     }
   ]
 }
